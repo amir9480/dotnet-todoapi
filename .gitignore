@@ -1,0 +1,10 @@
+.vscode
+.vs
+.idea
+
+**/bin
+**/obj
+
+*.db
+
+.env
