@@ -13,14 +13,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddEnvironmentVariables();
 builder.Configuration.AddDotNetEnv(".env", LoadOptions.TraversePath());
 
-string databaseName = Environment.GetEnvironmentVariable("DB_NAME") ?? throw new InvalidOperationException("DB_NAME environment variable is not set.");
-
 builder.Services.AddControllers();
 builder.Services.AddScoped<IAuthTokenManagerService, JWTTokenManagerService>();
 builder.Services.AddScoped<ITodoService, DatabaseTodoService>();
 
 if (builder.Environment.IsEnvironment("Testing") == false)
 {
+    string databaseName = Environment.GetEnvironmentVariable("DB_NAME") ?? throw new InvalidOperationException("DB_NAME environment variable is not set.");
+
     builder.Services.AddDatabaseDeveloperPageExceptionFilter();
     builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite($"Data Source={databaseName}"));
     builder.Services.AddEndpointsApiExplorer();
