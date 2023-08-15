@@ -65,11 +65,11 @@ public class JWTTokenManagerService : IAuthTokenManagerService
     /// <returns>New access token and refresh token and their validity lifetime.</returns>
     public LoginUserTokenResponse CreateToken(ApplicationUser user)
     {
-        DateTime accessTokenExpiration = DateTime.UtcNow.AddSeconds(int.Parse(configuration["Jwt:AccessTokenExpiration"] ?? "3600"));
-        DateTime refreshTokenExpiration = DateTime.UtcNow.AddDays(int.Parse(configuration["Jwt:AccessTokenExpiration"] ?? "7"));
+        DateTime accessTokenExpiration = DateTime.UtcNow.AddSeconds(int.Parse(Environment.GetEnvironmentVariable("ACCESS_TOKEN_LIFETIME_IN_SECONDS") ?? "3600"));
+        DateTime refreshTokenExpiration = DateTime.UtcNow.AddDays(int.Parse(Environment.GetEnvironmentVariable("REFRESH_TOKEN_LIFETIME_IN_DAYS") ?? "7"));
 
-        String accessToken = CreateJwtToken(user, accessTokenExpiration);
-        String refreshToken = CreateRefreshToken(user, refreshTokenExpiration);
+        string accessToken = CreateJwtToken(user, accessTokenExpiration);
+        string refreshToken = CreateRefreshToken(user, refreshTokenExpiration);
 
         return new LoginUserTokenResponse
         {
@@ -86,7 +86,7 @@ public class JWTTokenManagerService : IAuthTokenManagerService
     /// <param name="user">User to create access token for.</param>
     /// <param name="expiration">Access token expiration date time.</param>
     /// <returns>JWT token as string.</returns>
-    private String CreateJwtToken(ApplicationUser user, DateTime expiration)
+    private string CreateJwtToken(ApplicationUser user, DateTime expiration)
     {
         Claim[] claims = CreateClaims(user);
         SigningCredentials credentials = new SigningCredentials(
@@ -156,9 +156,6 @@ public class JWTTokenManagerService : IAuthTokenManagerService
     private Claim[] CreateClaims(ApplicationUser user)
     {
         return new[] {
-            new Claim(JwtRegisteredClaimNames.Sub, configuration["Jwt:Subject"] ?? ""),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new Claim(JwtRegisteredClaimNames.Iat, DateTime.UtcNow.ToString()),
             new Claim(ClaimTypes.NameIdentifier, user.Id),
             new Claim(ClaimTypes.Name, user.UserName ?? ""),
             new Claim(ClaimTypes.Email, user.Email ?? "")
