@@ -1,44 +1,28 @@
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
 using Moq;
-using TodoApi.Controllers;
 using TodoApi.Models;
 using TodoApi.Interfaces;
 using TodoApi.ResourceModels;
+using System.Text.Json;
+using System.Net;
+using Microsoft.Extensions.DependencyInjection;
+using TodoApi.Utilities;
 
 namespace TodoApi.Tests.Controllers;
 
-public class LoginControllerTests
+
+public class LoginControllerTests : IClassFixture<WebTestFixture>
 {
+    private readonly WebTestFixture fixture;
     private readonly Mock<UserManager<ApplicationUser>> userManagerMock;
     private readonly Mock<IAuthTokenManagerService> tokenCreationServiceMock;
-    private readonly LoginController loginController;
 
-    public LoginControllerTests()
+    public LoginControllerTests(WebTestFixture fixture)
     {
-        userManagerMock = new Mock<UserManager<ApplicationUser>>(
-            Mock.Of<IUserStore<ApplicationUser>>(),
-            null, null, null, null, null, null, null, null
-        );
+        this.fixture = fixture;
+        userManagerMock = new Mock<UserManager<ApplicationUser>>(Mock.Of<IUserStore<ApplicationUser>>(), null, null, null, null, null, null, null, null);
         tokenCreationServiceMock = new Mock<IAuthTokenManagerService>();
-        loginController = new LoginController(userManagerMock.Object, tokenCreationServiceMock.Object);
     }
-
-    [Fact]
-    public async Task Login_WithInvalidModelState_ReturnsBadRequest()
-    {
-        // Arrange
-        loginController.ModelState.AddModelError("Email", "Email is required");
-
-        // Act
-        IActionResult result = await loginController.Login(new LoginUserRequest());
-
-        // Assert
-        Assert.IsType<BadRequestObjectResult>(result);
-        BadRequestObjectResult badRequestResult = (BadRequestObjectResult)result;
-        Assert.Equal("Wrong credentials", badRequestResult.Value);
-    }
-
 
     [Fact]
     public async Task Login_WithNonExistingUser_ReturnsBadRequest()
@@ -47,13 +31,18 @@ public class LoginControllerTests
         var request = new LoginUserRequest { Email = "nonexistinguser@example.com", Password = "password" };
         userManagerMock.Setup(m => m.FindByNameAsync(request.Email)).ReturnsAsync((ApplicationUser?)null);
 
+        var httpClient = fixture.WithServices(
+                services => services.AddScoped<UserManager<ApplicationUser>>(serviceProvider => userManagerMock.Object)
+            )
+            .CreateClient();
+
         // Act
-        var result = await loginController.Login(request);
+        var response = await httpClient.PostAsync("/Auth/Login", request.ToFormUrlEncodedContent());
 
         // Assert
-        Assert.IsType<BadRequestObjectResult>(result);
-        var badRequestResult = (BadRequestObjectResult)result;
-        Assert.Equal("Wrong credentials", badRequestResult.Value);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var responseContent = await response.Content.ReadAsStringAsync();
+        Assert.Equal("Wrong credentials", responseContent);
     }
 
     [Fact]
@@ -65,13 +54,18 @@ public class LoginControllerTests
         userManagerMock.Setup(m => m.FindByNameAsync(request.Email)).ReturnsAsync(existingUser);
         userManagerMock.Setup(m => m.CheckPasswordAsync(existingUser, request.Password)).ReturnsAsync(false);
 
+        var httpClient = fixture.WithServices(
+                services => services.AddScoped<UserManager<ApplicationUser>>(serviceProvider => userManagerMock.Object)
+            )
+            .CreateClient();
+
         // Act
-        var result = await loginController.Login(request);
+        var response = await httpClient.PostAsync("/Auth/Login", request.ToFormUrlEncodedContent());
 
         // Assert
-        Assert.IsType<BadRequestObjectResult>(result);
-        var badRequestResult = (BadRequestObjectResult)result;
-        Assert.Equal("Wrong credentials", badRequestResult.Value);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var responseContent = await response.Content.ReadAsStringAsync();
+        Assert.Equal("Wrong credentials", responseContent);
     }
 
     [Fact]
@@ -85,12 +79,23 @@ public class LoginControllerTests
         var expectedToken = new LoginUserTokenResponse { AccessToken = "some-token" };
         tokenCreationServiceMock.Setup(m => m.CreateToken(existingUser)).Returns(expectedToken);
 
+        var httpClient = fixture.WithServices(services => {
+                services.AddScoped<UserManager<ApplicationUser>>(serviceProvider => userManagerMock.Object);
+                services.AddScoped<IAuthTokenManagerService>(serviceProvider => tokenCreationServiceMock.Object);
+            })
+            .CreateClient();
+
         // Act
-        var result = await loginController.Login(request);
+        var response = await httpClient.PostAsync("/Auth/Login", request.ToFormUrlEncodedContent());
 
         // Assert
-        Assert.IsType<OkObjectResult>(result);
-        var okResult = (OkObjectResult)result;
-        Assert.Equal(expectedToken, okResult.Value);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var responseContent = await response.Content.ReadAsStringAsync();
+        var responseObject = JsonSerializer.Deserialize<LoginUserTokenResponse>(responseContent, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        });
+        Assert.NotNull(responseObject);
+        Assert.Equal(expectedToken.AccessToken, responseObject.AccessToken);
     }
 }

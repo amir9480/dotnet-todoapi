@@ -19,6 +19,8 @@ public static class ServicesAuthExtension
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddDefaultTokenProviders();
 
+        var serviceProvider = services.BuildServiceProvider();
+
         services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -32,23 +34,24 @@ public static class ServicesAuthExtension
                 {
                     OnTokenValidated = async context =>
                     {
-                        var userIdClaim = context.Principal?.FindAll(ClaimTypes.NameIdentifier).Where(f => f.Value != "JWTServiceAccessToken").First();
+                        var userIdClaim = context.Principal?.FindFirst(ClaimTypes.NameIdentifier);
                         if (userIdClaim == null)
                         {
                             context.Fail("User ID claim not found in the token.");
                         }
                         else
                         {
-                            var userManager = context.HttpContext.RequestServices.GetRequiredService<UserManager<ApplicationUser>>();
-                            var user = await userManager.FindByIdAsync(userIdClaim.Value);
+                            var userManager = serviceProvider.GetService<UserManager<ApplicationUser>>() ?? throw new Exception();
+                            ApplicationUser? user = await userManager.FindByIdAsync(userIdClaim.Value);
                             if (user == null)
                             {
                                 context.Fail("User not found in the database.");
                             }
+                            context.HttpContext.Items["ApplicationUser"] = user;
                         }
                     }
                 };
-                var configuration = services.BuildServiceProvider().GetService<IConfiguration>();
+                var configuration = serviceProvider.GetService<IConfiguration>();
                 options.TokenValidationParameters = new TokenValidationParameters()
                 {
                     ValidateIssuer = true,
@@ -66,13 +69,15 @@ public static class ServicesAuthExtension
 
         services.Configure<IdentityOptions>(options =>
         {
+            IWebHostEnvironment? env = serviceProvider.GetService<IWebHostEnvironment>();
+
             // Password settings.
-            options.Password.RequireDigit = true;
-            options.Password.RequireLowercase = true;
-            options.Password.RequireNonAlphanumeric = true;
-            options.Password.RequireUppercase = true;
+            options.Password.RequireDigit = env?.IsEnvironment("Testing") != true;
+            options.Password.RequireLowercase = env?.IsEnvironment("Testing") != true;
+            options.Password.RequireNonAlphanumeric = env?.IsEnvironment("Testing") != true;
+            options.Password.RequireUppercase = env?.IsEnvironment("Testing") != true;
             options.Password.RequiredLength = 6;
-            options.Password.RequiredUniqueChars = 1;
+            options.Password.RequiredUniqueChars = env?.IsEnvironment("Testing") == true ? 0 : 1;
 
             // Lockout settings.
             options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);

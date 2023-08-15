@@ -13,7 +13,7 @@ public interface IAuthTokenManagerService
     /// </summary>
     /// <param name="user"></param>
     /// <returns>Access token and refresh token and their validity lifetime.</returns>
-    LoginUserTokenResponse CreateToken(ApplicationUser user);
+    public LoginUserTokenResponse CreateToken(ApplicationUser user);
 
     /// <summary>
     /// Find user model based on access token.
@@ -23,5 +23,5 @@ public interface IAuthTokenManagerService
     /// </remarks>
     /// <param name="accessToken"></param>
     /// <returns>Return user based on token, null if acccess token is invalid.</returns>
-    ApplicationUser? FindUserByToken(string accessToken);
+    public ApplicationUser? FindUserByToken(string accessToken);
 }

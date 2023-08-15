@@ -13,4 +13,9 @@ public class ApplicationUser : IdentityUser
     /// User refresh token expiry time.
     /// </summary>
     public DateTime? RefreshTokenExpiryTime { get; set; } = null;
+
+    /// <summary>
+    /// Todo items of each user.
+    /// </summary>
+    public ICollection<TodoItem> TodoItems { get; set; } = null!;
 }

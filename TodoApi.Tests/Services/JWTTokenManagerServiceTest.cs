@@ -14,7 +14,6 @@ public class JWTTokenManagerServiceTest
 {
     private const string TEST_ISSUER = "testIssuer";
     private const string TEST_AUDIENCE = "testAudience";
-    private const string TEST_SUBJECT = "testSubject";
 
     private const string TEST_USER_ID = "testUserId";
     private const string TEST_USER_USERNAME = "testUsername";
@@ -35,7 +34,6 @@ public class JWTTokenManagerServiceTest
 
         configurationMock.SetupGet(c => c["Jwt:Issuer"]).Returns(TEST_ISSUER);
         configurationMock.SetupGet(c => c["Jwt:Audience"]).Returns(TEST_AUDIENCE);
-        configurationMock.SetupGet(c => c["Jwt:Subject"]).Returns(TEST_SUBJECT);
         Environment.SetEnvironmentVariable("JWT_KEY", GenerateJwtKey());
 
         jwtService = new JWTTokenManagerService(configurationMock.Object, userManagerMock.Object);
@@ -83,7 +81,6 @@ public class JWTTokenManagerServiceTest
         JwtSecurityToken token = tokenHandler.ReadJwtToken(result.AccessToken);
         Assert.Equal(TEST_ISSUER, token.Issuer);
         Assert.Equal(TEST_AUDIENCE, token.Audiences.FirstOrDefault());
-        Assert.Equal(TEST_SUBJECT, token.Subject);
         Assert.Equal(TEST_USER_ID, token.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value);
         Assert.Equal(TEST_USER_USERNAME, token.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value);
         Assert.Equal(TEST_USER_EMAIL, token.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value);

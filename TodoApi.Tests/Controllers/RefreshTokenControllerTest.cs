@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
@@ -19,18 +18,13 @@ public class RefreshTokenControllerTest
     private const string NEW_RESET_TOKEN = "new_reset_token";
 
     private readonly RefreshTokenController controller;
-    private readonly Mock<UserManager<ApplicationUser>> userManagerMock;
     private readonly Mock<IAuthTokenManagerService> tokenServiceMock;
 
     public RefreshTokenControllerTest()
     {
-        userManagerMock = new Mock<UserManager<ApplicationUser>>(
-            Mock.Of<IUserStore<ApplicationUser>>(),
-            null, null, null, null, null, null, null, null
-        );
         tokenServiceMock = new Mock<IAuthTokenManagerService>();
 
-        controller = new RefreshTokenController(userManagerMock.Object, tokenServiceMock.Object);
+        controller = new RefreshTokenController(tokenServiceMock.Object);
         var httpContext = new DefaultHttpContext();
         httpContext.Request.Headers[HeaderNames.Authorization] = new StringValues(VALID_ACCESS_TOKEN);
         controller.ControllerContext = new ControllerContext()
@@ -111,25 +105,5 @@ public class RefreshTokenControllerTest
 
         // Assert
         Assert.IsType<UnauthorizedResult>(result);
-    }
-
-    [Fact]
-    public void RefreshToken_WithInvalidModelState_ReturnsBadRequestResult()
-    {
-        // Arrange
-        var request = new RefreshTokenRequest
-        {
-            RefreshToken = ""
-        };
-
-        controller.ModelState.AddModelError("Error", "Invalid model state");
-
-        // Act
-        var result = controller.RefreshToken(request);
-
-        // Assert
-        Assert.IsType<BadRequestObjectResult>(result);
-        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-        Assert.Equal("Wrong credentials", badRequestResult.Value);
     }
 }

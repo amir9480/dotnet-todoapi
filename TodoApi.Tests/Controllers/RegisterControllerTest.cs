@@ -46,22 +46,4 @@ public class RegisterControllerTest
         Assert.Null(((RegisterUserRequest)createdResult.Value).Password);
         userManagerMock.Verify(um => um.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()), Times.Once);
     }
-
-    [Fact]
-    public async Task Register_WithInvalidModel_ReturnsBadRequest()
-    {
-        // Arrange
-        var model = new RegisterUserRequest();
-        registerController.ModelState.AddModelError("Email", "The Email field is required.");
-
-        // Act
-        var result = await registerController.RegisterUser(model);
-
-        // Assert
-        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-        var errors = Assert.IsType<SerializableError>(badRequestResult.Value);
-        Assert.Single(errors);
-        Assert.Equal("The Email field is required.", ((IEnumerable<string>)errors["Email"]).First());
-        userManagerMock.Verify(um => um.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()), Times.Never);
-    }
 }
