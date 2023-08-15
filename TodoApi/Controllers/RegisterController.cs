@@ -22,13 +22,11 @@ public class RegisterController : ControllerBase
 
     [HttpPost]
     [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK, Type=typeof(LoginUserTokenResponse))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type=typeof(BadRequestResult))]
+    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity, Type=typeof(IEnumerable<IdentityError>))]
     public async Task<IActionResult> RegisterUser([FromForm] RegisterUserRequest model)
     {
-        if (! ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
-        }
-
         IdentityResult result = await userManager.CreateAsync(
             new ApplicationUser() { UserName = model.Email, Email = model.Email },
             model.Password
@@ -36,7 +34,7 @@ public class RegisterController : ControllerBase
 
         if (! result.Succeeded)
         {
-            return BadRequest(result.Errors);
+            return UnprocessableEntity(result.Errors);
         }
 
         model.Password = null!;

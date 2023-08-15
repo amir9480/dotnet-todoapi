@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Net.Http.Headers;
 using TodoApi.Interfaces;
@@ -14,26 +13,23 @@ namespace TodoApi.Controllers;
 [Route("Auth/[controller]")]
 public class RefreshTokenController : ControllerBase
 {
-    private readonly UserManager<ApplicationUser> userManager;
     private readonly IAuthTokenManagerService tokenService;
 
-    public RefreshTokenController(UserManager<ApplicationUser> userManager, IAuthTokenManagerService tokenService)
+    public RefreshTokenController(IAuthTokenManagerService tokenService)
     {
-        this.userManager = userManager;
         this.tokenService = tokenService;
     }
 
     [HttpPost]
+    [ProducesResponseType(StatusCodes.Status200OK, Type=typeof(LoginUserTokenResponse))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type=typeof(string))]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized, Type=typeof(string))]
     public IActionResult RefreshToken([FromForm] RefreshTokenRequest request)
     {
-        if (!ModelState.IsValid)
-        {
-            return BadRequest("Wrong credentials");
-        }
-
         try
         {
             var accessToken = HttpContext.Request.Headers[HeaderNames.Authorization].ToString();
+
             ApplicationUser? user = tokenService.FindUserByToken(accessToken);
 
             if (user != null && user.RefreshToken == request.RefreshToken)

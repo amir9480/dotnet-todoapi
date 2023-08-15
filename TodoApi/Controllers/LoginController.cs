@@ -25,13 +25,10 @@ public class LoginController : ControllerBase
 
     [HttpPost]
     [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK, Type=typeof(LoginUserTokenResponse))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type=typeof(string))]
     public async Task<IActionResult> Login([FromForm] LoginUserRequest request)
     {
-        if (!ModelState.IsValid)
-        {
-            return BadRequest("Wrong credentials");
-        }
-
         var user = await userManager.FindByNameAsync(request.Email);
 
         if (user == null)
