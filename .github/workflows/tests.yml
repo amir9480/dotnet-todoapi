@@ -8,14 +8,10 @@ on:
     branches: [ "main" ]
   pull_request:
 
-env:
-  JWT_KEY: '${{ secrets.JWT_KEY }}'
-
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
+    environment: testing
     steps:
     - uses: actions/checkout@v3
     - name: Setup .NET
