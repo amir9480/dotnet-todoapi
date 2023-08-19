@@ -1,40 +1,39 @@
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Primitives;
-using Microsoft.Net.Http.Headers;
+using System.Net;
+using System.Text;
+using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
-using TodoApi.Controllers;
 using TodoApi.Interfaces;
 using TodoApi.Models;
 using TodoApi.ResourceModels;
+using TodoApi.Utilities;
 
 namespace TodoApi.Tests.Controllers;
 
-public class RefreshTokenControllerTest
+public class RefreshTokenControllerTest : IClassFixture<WebTestFixture>
 {
-    private const string VALID_ACCESS_TOKEN = "valid_access_token";
     private const string VALID_REFRESH_TOKEN = "valid_refresh_token";
     private const string INVALID_REFRESH_TOKEN = "invalid_refresh_token";
+    private const string NEW_ACCESS_TOKEN = "valid_access_token";
     private const string NEW_RESET_TOKEN = "new_reset_token";
 
-    private readonly RefreshTokenController controller;
+    private readonly HttpClient client;
     private readonly Mock<IAuthTokenManagerService> tokenServiceMock;
+    private string accessTokenHeader;
 
-    public RefreshTokenControllerTest()
+    public RefreshTokenControllerTest(WebTestFixture fixture)
     {
         tokenServiceMock = new Mock<IAuthTokenManagerService>();
-
-        controller = new RefreshTokenController(tokenServiceMock.Object);
-        var httpContext = new DefaultHttpContext();
-        httpContext.Request.Headers[HeaderNames.Authorization] = new StringValues(VALID_ACCESS_TOKEN);
-        controller.ControllerContext = new ControllerContext()
-        {
-            HttpContext = httpContext
-        };
+        client = fixture.WithServices(
+                services => services.AddScoped<IAuthTokenManagerService>(serviceProvider => tokenServiceMock.Object)
+            )
+            .CreateClient();
+        accessTokenHeader = $"Bearer {fixture.UserAccessToken}";
+        client.DefaultRequestHeaders.Add("Authorization", accessTokenHeader);
     }
 
     [Fact]
-    public void RefreshToken_WithValidTokenAndMatchingRefreshToken_ReturnsOkResult()
+    public async Task RefreshToken_WithValidTokenAndMatchingRefreshToken_ReturnsOkResult()
     {
         // Arrange
         var request = new RefreshTokenRequest
@@ -47,27 +46,32 @@ public class RefreshTokenControllerTest
             RefreshToken = VALID_REFRESH_TOKEN
         };
 
-        tokenServiceMock.Setup(t => t.FindUserByToken(VALID_ACCESS_TOKEN)).Returns(user);
+        tokenServiceMock.Setup(t => t.FindUserByToken(accessTokenHeader)).Returns(user);
         tokenServiceMock.Setup(t => t.CreateToken(user)).Returns(new LoginUserTokenResponse
         {
-            AccessToken = VALID_ACCESS_TOKEN,
+            AccessToken = NEW_ACCESS_TOKEN,
             AccessTokenExpiration = DateTime.UtcNow.AddDays(1),
             RefreshToken = NEW_RESET_TOKEN,
             RefreshTokenExpiration = DateTime.UtcNow.AddDays(1),
         });
 
         // Act
-        var result = controller.RefreshToken(request);
+        var response = await client.PostAsync("/Auth/RefreshToken", request.ToFormUrlEncodedContent());
+        var responseBody = await response.Content.ReadAsStringAsync();
+        var result = JsonSerializer.Deserialize<LoginUserTokenResponse>(responseBody, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        });
 
         // Assert
-        Assert.IsType<OkObjectResult>(result);
-        var response = Assert.IsType<LoginUserTokenResponse>(((OkObjectResult)result).Value);
-        Assert.Equal(VALID_ACCESS_TOKEN, response.AccessToken);
-        Assert.Equal(NEW_RESET_TOKEN, response.RefreshToken);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.NotNull(result);
+        Assert.Equal(NEW_ACCESS_TOKEN, result.AccessToken);
+        Assert.Equal(NEW_RESET_TOKEN, result.RefreshToken);
     }
 
     [Fact]
-    public void RefreshToken_WithValidTokenAndMismatchingRefreshToken_ReturnsUnauthorizedResult()
+    public async Task RefreshToken_WithValidTokenAndMismatchingRefreshToken_ReturnsUnauthorizedResult()
     {
         // Arrange
         var request = new RefreshTokenRequest
@@ -80,17 +84,17 @@ public class RefreshTokenControllerTest
             RefreshToken = VALID_REFRESH_TOKEN
         };
 
-        tokenServiceMock.Setup(t => t.FindUserByToken(VALID_ACCESS_TOKEN)).Returns(user);
+        tokenServiceMock.Setup(t => t.FindUserByToken(accessTokenHeader)).Returns(user);
 
         // Act
-        var result = controller.RefreshToken(request);
+        var response = await client.PostAsync("/Auth/RefreshToken", request.ToFormUrlEncodedContent());
 
         // Assert
-        Assert.IsType<UnauthorizedResult>(result);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]
-    public void RefreshToken_WithInvalidToken_ReturnsUnauthorizedResult()
+    public async Task RefreshToken_WithInvalidToken_ReturnsUnauthorizedResult()
     {
         // Arrange
         var request = new RefreshTokenRequest
@@ -98,12 +102,12 @@ public class RefreshTokenControllerTest
             RefreshToken = VALID_REFRESH_TOKEN
         };
 
-        tokenServiceMock.Setup(t => t.FindUserByToken(VALID_ACCESS_TOKEN)).Returns((ApplicationUser?)null);
+        tokenServiceMock.Setup(t => t.FindUserByToken(accessTokenHeader)).Returns((ApplicationUser?)null);
 
         // Act
-        var result = controller.RefreshToken(request);
+        var response = await client.PostAsync("/Auth/RefreshToken", request.ToFormUrlEncodedContent());
 
         // Assert
-        Assert.IsType<UnauthorizedResult>(result);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 }

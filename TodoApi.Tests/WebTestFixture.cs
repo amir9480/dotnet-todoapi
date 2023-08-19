@@ -19,8 +19,11 @@ public class WebTestFixture : WebApplicationFactory<Program>
     public readonly ApplicationUser User;
     public string UserAccessToken = "";
 
+    private string memoryDatabaseName;
+
     public WebTestFixture()
     {
+        memoryDatabaseName = "Testing-" + Guid.NewGuid().ToString();
         User = new ApplicationUser
         {
             UserName = TEST_USER_USERNAME,
@@ -40,29 +43,24 @@ public class WebTestFixture : WebApplicationFactory<Program>
 
             services.AddDbContext<ApplicationDbContext>(options =>
             {
-                options.UseInMemoryDatabase("Testing");
+                options.UseInMemoryDatabase(memoryDatabaseName);
                 options.UseInternalServiceProvider(provider);
             });
             services.AddAuthSupport();
 
-            var sp = services.BuildServiceProvider();
+            var serviceProvider = services.BuildServiceProvider();
+            DbContext = serviceProvider.GetRequiredService<ApplicationDbContext>();
 
-            using (var scope = sp.CreateScope())
-            {
-                var scopedServices = scope.ServiceProvider;
-                DbContext = scopedServices.GetRequiredService<ApplicationDbContext>();
-                IAuthTokenManagerService tokenManagerService = scopedServices.GetRequiredService<IAuthTokenManagerService>();
-                UserManager<ApplicationUser> userManager = scopedServices.GetRequiredService<UserManager<ApplicationUser>>();
+            // Ensure the database is recreated.
+            DbContext.Database.EnsureDeleted();
+            DbContext.Database.EnsureCreated();
 
-                // Ensure the database is created.
-                DbContext.Database.EnsureDeleted();
-                DbContext.Database.EnsureCreated();
+            UserManager<ApplicationUser> userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var result = userManager.CreateAsync(User, "password").GetAwaiter().GetResult();
+            Assert.True(result.Succeeded);
 
-                var result = userManager.CreateAsync(User, "password").GetAwaiter().GetResult();
-                Assert.True(result.Succeeded);
-
-                UserAccessToken = tokenManagerService.CreateToken(User).AccessToken;
-            }
+            IAuthTokenManagerService tokenManagerService = serviceProvider.GetRequiredService<IAuthTokenManagerService>();
+            UserAccessToken = tokenManagerService.CreateToken(User).AccessToken;
         });
     }
 

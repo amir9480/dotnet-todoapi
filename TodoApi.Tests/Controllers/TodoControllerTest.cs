@@ -19,26 +19,26 @@ public class TodoControllerTest : IClassFixture<WebTestFixture>
     public async Task Create_WithValidModel_ShouldReturnCreatedResult()
     {
         // Arrange
-        var model = new NewTodoRequest { Text = "Sample todo item" };
+        var request = new NewTodoRequest { Text = "Sample todo item" };
 
         // Act
-        var response = await httpClient.PostAsync("/Todo", model.ToFormUrlEncodedContent());
+        var response = await httpClient.PostAsync("/Todo", request.ToFormUrlEncodedContent());
 
         // Assert
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var createdItem = await response.Content.ReadFromJsonAsync<TodoItem>();
         Assert.NotNull(createdItem);
-        Assert.Equal(model.Text, createdItem.Text);
+        Assert.Equal(request.Text, createdItem.Text);
     }
 
     [Fact]
     public async Task Create_WithInvalidModel_ShouldReturnBadRequestResult()
     {
         // Arrange
-        var model = new NewTodoRequest { Text = "" };
+        var request = new NewTodoRequest { Text = "" };
 
         // Act
-        var response = await httpClient.PostAsync("/Todo", model.ToFormUrlEncodedContent());
+        var response = await httpClient.PostAsync("/Todo", request.ToFormUrlEncodedContent());
 
         // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
