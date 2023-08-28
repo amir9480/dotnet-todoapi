@@ -9,7 +9,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    environment: testing
+    env:
+      JWT_KEY: ${{ secrets.JWT_KEY }}
     steps:
     - uses: actions/checkout@v3
     - name: Setup .NET
