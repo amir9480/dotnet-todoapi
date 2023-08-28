@@ -22,7 +22,7 @@ public class RegisterController : ControllerBase
 
     [HttpPost]
     [AllowAnonymous]
-    [ProducesResponseType(StatusCodes.Status200OK, Type=typeof(LoginUserTokenResponse))]
+    [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type=typeof(BadRequestResult))]
     [ProducesResponseType(StatusCodes.Status422UnprocessableEntity, Type=typeof(IEnumerable<IdentityError>))]
     public async Task<IActionResult> RegisterUser([FromForm] RegisterUserRequest model)
