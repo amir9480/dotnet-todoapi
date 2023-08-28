@@ -34,7 +34,6 @@ public class JWTTokenManagerServiceTest
 
         configurationMock.SetupGet(c => c["Jwt:Issuer"]).Returns(TEST_ISSUER);
         configurationMock.SetupGet(c => c["Jwt:Audience"]).Returns(TEST_AUDIENCE);
-        Environment.SetEnvironmentVariable("JWT_KEY", GenerateJwtKey());
 
         jwtService = new JWTTokenManagerService(configurationMock.Object, userManagerMock.Object);
         user = new ApplicationUser
@@ -122,16 +121,5 @@ public class JWTTokenManagerServiceTest
         // Assert
         userManagerMock.Verify(u => u.FindByNameAsync(It.IsAny<string>()), Times.Never);
         Assert.Null(result);
-    }
-
-    private static string GenerateJwtKey()
-    {
-        byte[] keyBytes = new byte[32];
-        using (var rng = RandomNumberGenerator.Create())
-        {
-            rng.GetBytes(keyBytes);
-        }
-
-        return Convert.ToBase64String(keyBytes);
     }
 }
