@@ -14,7 +14,7 @@ public class TodoItem : IEntityTimestamps
     public string UserId { get; set; } = null!;
 
     [JsonIgnore]
-    public ApplicationUser user { get; set; } = null!;
+    public ApplicationUser User { get; set; } = null!;
 
     public DateTime CreatedDate { get; set; }
 

@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Identity;
 
 namespace TodoApi.Models;
@@ -7,6 +8,7 @@ public class ApplicationUser : IdentityUser
     /// <summary>
     /// API user refresh token.
     /// </summary>
+    [JsonIgnore]
     public String? RefreshToken { get; set; } = null;
 
     /// <summary>
@@ -17,5 +19,6 @@ public class ApplicationUser : IdentityUser
     /// <summary>
     /// Todo items of each user.
     /// </summary>
+    [JsonIgnore]
     public ICollection<TodoItem> TodoItems { get; set; } = null!;
 }
