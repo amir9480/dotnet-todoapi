@@ -6,11 +6,11 @@ using TodoApi.Models;
 
 public class DatabaseTodoService: ITodoService
 {
-    private ApplicationDbContext db;
+    private ApplicationDbContext dbContext;
 
     public DatabaseTodoService(ApplicationDbContext dbContext)
     {
-        this.db = dbContext;
+        this.dbContext = dbContext;
     }
 
     public TodoItem CreateTodoItem(ApplicationUser user, string text)
@@ -20,20 +20,62 @@ public class DatabaseTodoService: ITodoService
             UserId = user.Id
         };
 
-        db.TodoItems.Add(newItem);
+        dbContext.TodoItems.Add(newItem);
 
-        db.SaveChanges();
+        dbContext.SaveChanges();
 
         return newItem;
     }
 
+    public TodoItem? FindTodoItemById(int id)
+    {
+        return dbContext.TodoItems
+            .Where(todoItem => todoItem.Id == id)
+            .FirstOrDefault<TodoItem?>();
+    }
+
     public void MarkCompleted(TodoItem item)
     {
-        throw new NotImplementedException();
+        UpdateIsCompleted(item, true);
     }
 
     public void MarkIncompleted(TodoItem item)
     {
-        throw new NotImplementedException();
+        UpdateIsCompleted(item, false);
+    }
+
+    private void UpdateIsCompleted(TodoItem item, bool isCompleted)
+    {
+        item.IsCompleted = isCompleted;
+
+        dbContext.TodoItems.Update(item);
+
+        dbContext.SaveChanges();
+    }
+
+    public TodoItem UpdateTodoItemText(TodoItem item, string text)
+    {
+        item.Text = text;
+
+        dbContext.TodoItems.Update(item);
+
+        dbContext.SaveChanges();
+
+        return item;
+    }
+
+    public void DeleteTodoItem(TodoItem item)
+    {
+        dbContext.TodoItems.Remove(item);
+
+        dbContext.SaveChanges();
+    }
+
+    public ICollection<TodoItem> GetTodoItems(ApplicationUser user)
+    {
+        return dbContext.TodoItems
+            .Where(todoItem => todoItem.UserId == user.Id)
+            .OrderBy(todoItem => todoItem.IsCompleted)
+            .ToList();
     }
 }

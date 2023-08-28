@@ -29,7 +29,6 @@ public class MeControllerTest : IClassFixture<WebTestFixture>
         var response = await client.SendAsync(request);
 
         // Assert
-        response.EnsureSuccessStatusCode();
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         var responseContent = await response.Content.ReadAsStringAsync();
