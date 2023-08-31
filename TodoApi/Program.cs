@@ -9,18 +9,16 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Configuration.AddEnvironmentVariables();
 builder.Configuration.AddDotNetEnv(".env", LoadOptions.TraversePath());
-
 builder.Services.AddControllers();
-builder.Services.AddScoped<IAuthTokenManagerService, JWTTokenManagerService>();
+builder.Services.AddScoped<IAuthTokenManagerService, JwtTokenManagerService>();
 builder.Services.AddScoped<ITodoService, DatabaseTodoService>();
 
 if (builder.Environment.IsEnvironment("Testing") == false)
 {
-    string databaseName = Environment.GetEnvironmentVariable("DB_NAME") ?? throw new InvalidOperationException("DB_NAME environment variable is not set.");
-
+    var databaseName = Environment.GetEnvironmentVariable("DB_NAME") ??
+                       throw new InvalidOperationException("DB_NAME environment variable is not set.");
     builder.Services.AddDatabaseDeveloperPageExceptionFilter();
     builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite($"Data Source={databaseName}"));
     builder.Services.AddEndpointsApiExplorer();
@@ -49,4 +47,6 @@ app.MapControllers();
 
 app.Run();
 
-public partial class Program { }
+public partial class Program
+{
+}

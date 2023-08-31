@@ -13,29 +13,27 @@ namespace TodoApi.Controllers;
 [Route("Auth/[controller]")]
 public class RegisterController : ControllerBase
 {
-    private readonly UserManager<ApplicationUser> userManager;
+    private readonly UserManager<ApplicationUser> _userManager;
 
     public RegisterController(UserManager<ApplicationUser> userManager)
     {
-        this.userManager = userManager;
+        _userManager = userManager;
     }
 
     [HttpPost]
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest, Type=typeof(BadRequestResult))]
-    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity, Type=typeof(IEnumerable<IdentityError>))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(BadRequestResult))]
+    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity, Type = typeof(IEnumerable<IdentityError>))]
     public async Task<IActionResult> RegisterUser([FromForm] RegisterUserRequest model)
     {
-        IdentityResult result = await userManager.CreateAsync(
-            new ApplicationUser() { UserName = model.Email, Email = model.Email },
+        var result = await _userManager.CreateAsync(
+            new ApplicationUser { UserName = model.Email, Email = model.Email },
             model.Password
         );
 
-        if (! result.Succeeded)
-        {
+        if (!result.Succeeded)
             return UnprocessableEntity(result.Errors);
-        }
 
         model.Password = null!;
 

@@ -9,16 +9,16 @@ public class ApplicationUser : IdentityUser
     /// API user refresh token.
     /// </summary>
     [JsonIgnore]
-    public String? RefreshToken { get; set; } = null;
+    public string? RefreshToken { get; set; }
 
     /// <summary>
     /// User refresh token expiry time.
     /// </summary>
-    public DateTime? RefreshTokenExpiryTime { get; set; } = null;
+    public DateTime? RefreshTokenExpiryTime { get; set; }
 
     /// <summary>
     /// Todo items of each user.
     /// </summary>
     [JsonIgnore]
-    public ICollection<TodoItem> TodoItems { get; set; } = null!;
+    public ICollection<TodoItem> TodoItems { get; set; } = new List<TodoItem>();
 }

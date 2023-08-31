@@ -4,7 +4,7 @@ using TodoApi.ResourceModels;
 namespace TodoApi.Interfaces;
 
 /// <summary>
-/// Interface to implement auth token managment.
+/// Interface to implement auth token management.
 /// </summary>
 public interface IAuthTokenManagerService
 {
@@ -22,6 +22,6 @@ public interface IAuthTokenManagerService
     /// Validity time should be ignored.
     /// </remarks>
     /// <param name="accessToken"></param>
-    /// <returns>Return user based on token, null if acccess token is invalid.</returns>
+    /// <returns>Return user based on token, null if access token is invalid.</returns>
     public ApplicationUser? FindUserByToken(string accessToken);
 }

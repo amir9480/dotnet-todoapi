@@ -4,6 +4,5 @@ namespace TodoApi.ResourceModels;
 
 public class RefreshTokenRequest
 {
-    [Required]
-    public string RefreshToken { get; set; } = null!;
+    [Required] public required string RefreshToken { get; set; }
 }

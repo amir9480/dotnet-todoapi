@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Net.Http.Headers;
 using TodoApi.Interfaces;
-using TodoApi.Models;
 using TodoApi.ResourceModels;
 
 namespace TodoApi.Controllers;
@@ -13,28 +12,28 @@ namespace TodoApi.Controllers;
 [Route("Auth/[controller]")]
 public class RefreshTokenController : ControllerBase
 {
-    private readonly IAuthTokenManagerService tokenService;
+    private readonly IAuthTokenManagerService _tokenManager;
 
-    public RefreshTokenController(IAuthTokenManagerService tokenService)
+    public RefreshTokenController(IAuthTokenManagerService tokenManager)
     {
-        this.tokenService = tokenService;
+        _tokenManager = tokenManager;
     }
 
     [HttpPost]
-    [ProducesResponseType(StatusCodes.Status200OK, Type=typeof(LoginUserTokenResponse))]
-    [ProducesResponseType(StatusCodes.Status400BadRequest, Type=typeof(string))]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized, Type=typeof(string))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(LoginUserTokenResponse))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(string))]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(string))]
     public IActionResult RefreshToken([FromForm] RefreshTokenRequest request)
     {
         try
         {
             var accessToken = HttpContext.Request.Headers[HeaderNames.Authorization].ToString();
 
-            ApplicationUser? user = tokenService.FindUserByToken(accessToken);
+            var user = _tokenManager.FindUserByToken(accessToken);
 
             if (user != null && user.RefreshToken == request.RefreshToken)
             {
-                var resetToken = tokenService.CreateToken(user);
+                var resetToken = _tokenManager.CreateToken(user);
 
                 return Ok(resetToken);
             }

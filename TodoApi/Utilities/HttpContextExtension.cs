@@ -11,13 +11,9 @@ public static class HttpContextExtensions
     /// <exception cref="UnauthorizedAccessException">If no user is logged in.</exception>
     public static ApplicationUser GetApplicationUser(this HttpContext httpContext)
     {
-        ApplicationUser? user = httpContext.Items["ApplicationUser"] as ApplicationUser;
-
+        var user = httpContext.Items["ApplicationUser"] as ApplicationUser;
         if (user == null)
-        {
             throw new UnauthorizedAccessException("Current user not found in HttpContext.");
-        }
-
         return user;
     }
 }

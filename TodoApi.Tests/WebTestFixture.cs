@@ -19,11 +19,11 @@ public class WebTestFixture : WebApplicationFactory<Program>
     public readonly ApplicationUser User;
     public string UserAccessToken = "";
 
-    private string memoryDatabaseName;
+    private string _memoryDatabaseName;
 
     public WebTestFixture()
     {
-        memoryDatabaseName = "Testing-" + Guid.NewGuid().ToString();
+        _memoryDatabaseName = "Testing-" + Guid.NewGuid().ToString();
         User = new ApplicationUser
         {
             UserName = TEST_USER_USERNAME,
@@ -43,7 +43,7 @@ public class WebTestFixture : WebApplicationFactory<Program>
 
             services.AddDbContext<ApplicationDbContext>(options =>
             {
-                options.UseInMemoryDatabase(memoryDatabaseName);
+                options.UseInMemoryDatabase(_memoryDatabaseName);
                 options.UseInternalServiceProvider(provider);
             });
             services.AddAuthSupport();

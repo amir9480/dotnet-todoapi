@@ -4,10 +4,9 @@ namespace TodoApi.ResourceModels;
 
 public class RegisterUserRequest
 {
-    [Required]
     [EmailAddress]
-    public string Email { get; set; } = null!;
-
     [Required]
-    public string Password { get; set; } = null!;
+    public required string Email { get; set; }
+    
+    [Required] public required string Password { get; set; }
 }

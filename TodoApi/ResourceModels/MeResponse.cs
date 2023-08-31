@@ -1,9 +1,11 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace TodoApi.ResourceModels;
 
 public class MeResponse
 {
-    public string Id { get; set; } = null!;
-    public string? Email { get; set; } = null!;
-    public DateTime? RefreshTokenExpiryTime { get; set; } = null;
+    [Required] public required string Id { get; set; }
+    public string? Email { get; set; }
+    public DateTime? RefreshTokenExpiryTime { get; set; }
 
 }

@@ -1,4 +1,3 @@
-
 namespace TodoApi.Utilities;
 
 public static class ObjectExtensions
@@ -8,19 +7,13 @@ public static class ObjectExtensions
     /// </summary>
     public static FormUrlEncodedContent ToFormUrlEncodedContent(this object obj)
     {
-        var formData = new List<KeyValuePair<string, string>>();
         var properties = obj.GetType().GetProperties();
 
-        foreach (var property in properties)
-        {
-            var key = property.Name;
-            var value = property.GetValue(obj)?.ToString();
-
-            if (value != null)
-            {
-                formData.Add(new KeyValuePair<string, string>(key, value));
-            }
-        }
+        var formData = (from property in properties
+                        let key = property.Name
+                        let value = property.GetValue(obj)?.ToString()
+                        where value != null
+                        select new KeyValuePair<string, string>(key, value)).ToList();
 
         return new FormUrlEncodedContent(formData);
     }

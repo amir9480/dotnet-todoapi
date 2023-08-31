@@ -22,11 +22,11 @@ public static class ServicesAuthExtension
         var serviceProvider = services.BuildServiceProvider();
 
         services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+        })
             .AddJwtBearer(options =>
             {
                 options.SaveToken = true;
@@ -36,17 +36,13 @@ public static class ServicesAuthExtension
                     {
                         var userIdClaim = context.Principal?.FindFirst(ClaimTypes.NameIdentifier);
                         if (userIdClaim == null)
-                        {
                             context.Fail("User ID claim not found in the token.");
-                        }
                         else
                         {
-                            var userManager = serviceProvider.GetService<UserManager<ApplicationUser>>() ?? throw new Exception();
-                            ApplicationUser? user = await userManager.FindByIdAsync(userIdClaim.Value);
-                            if (user == null)
-                            {
-                                context.Fail("User not found in the database.");
-                            }
+                            var userManager = serviceProvider.GetService<UserManager<ApplicationUser>>() ??
+                                              throw new Exception();
+                            var user = await userManager.FindByIdAsync(userIdClaim.Value);
+                            if (user == null) context.Fail("User not found in the database.");
                             context.HttpContext.Items["ApplicationUser"] = user;
                         }
                     }
@@ -62,14 +58,13 @@ public static class ServicesAuthExtension
                     ValidIssuer = configuration?["Jwt:Issuer"] ?? "TodoApi",
                     ClockSkew = TimeSpan.Zero,
                     IssuerSigningKey = new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_KEY") ?? "")
-                    ),
+                        Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_KEY") ?? ""))
                 };
             });
 
         services.Configure<IdentityOptions>(options =>
         {
-            IWebHostEnvironment? env = serviceProvider.GetService<IWebHostEnvironment>();
+            var env = serviceProvider.GetService<IWebHostEnvironment>();
 
             // Password settings.
             options.Password.RequireDigit = env?.IsEnvironment("Testing") != true;
@@ -78,12 +73,10 @@ public static class ServicesAuthExtension
             options.Password.RequireUppercase = env?.IsEnvironment("Testing") != true;
             options.Password.RequiredLength = 6;
             options.Password.RequiredUniqueChars = env?.IsEnvironment("Testing") == true ? 0 : 1;
-
             // Lockout settings.
             options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
             options.Lockout.MaxFailedAccessAttempts = 5;
             options.Lockout.AllowedForNewUsers = true;
-
             // User settings.
             options.User.RequireUniqueEmail = true;
         });

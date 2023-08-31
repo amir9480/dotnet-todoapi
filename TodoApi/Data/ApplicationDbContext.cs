@@ -6,30 +6,27 @@ using TodoApi.Models;
 
 namespace TodoApi.Data;
 
-public class ApplicationDbContext: IdentityDbContext<ApplicationUser>
+public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
-    public ApplicationDbContext(DbContextOptions options): base(options)
+    public ApplicationDbContext(DbContextOptions options) : base(options)
     {
         ChangeTracker.Tracked += OnEntityTracked;
         ChangeTracker.StateChanged += OnEntityStateChanged;
     }
 
-    void OnEntityTracked(object? sender, EntityTrackedEventArgs e)
-    {
-        if (!e.FromQuery && e.Entry.State == EntityState.Added && e.Entry.Entity is IEntityTimestamps entity)
-        {
-            entity.CreatedDate = DateTime.Now;
-            entity.UpdatedDate = DateTime.Now;
-        }
-    }
-
-    void OnEntityStateChanged(object? sender, EntityStateChangedEventArgs e)
-    {
-        if (e.NewState == EntityState.Modified && e.Entry.Entity is IEntityTimestamps entity)
-        {
-            entity.UpdatedDate = DateTime.Now;
-        }
-    }
-
     public DbSet<TodoItem> TodoItems { get; set; }
+
+    private static void OnEntityTracked(object? sender, EntityTrackedEventArgs trackedEvent)
+    {
+        if (trackedEvent.FromQuery || trackedEvent.Entry.State != EntityState.Added ||
+            trackedEvent.Entry.Entity is not IEntityTimestamps entity) return;
+        entity.CreatedDate = DateTime.Now;
+        entity.UpdatedDate = DateTime.Now;
+    }
+
+    private static void OnEntityStateChanged(object? sender, EntityStateChangedEventArgs changedEvent)
+    {
+        if (changedEvent.NewState == EntityState.Modified && changedEvent.Entry.Entity is IEntityTimestamps entity)
+            entity.UpdatedDate = DateTime.Now;
+    }
 }

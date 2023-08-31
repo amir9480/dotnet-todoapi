@@ -13,15 +13,15 @@ namespace TodoApi.Tests.Controllers;
 
 public class LoginControllerTests : IClassFixture<WebTestFixture>
 {
-    private readonly WebTestFixture fixture;
-    private readonly Mock<UserManager<ApplicationUser>> userManagerMock;
-    private readonly Mock<IAuthTokenManagerService> tokenCreationServiceMock;
+    private readonly WebTestFixture _fixture;
+    private readonly Mock<UserManager<ApplicationUser>> _userManagerMock;
+    private readonly Mock<IAuthTokenManagerService> _tokenCreationServiceMock;
 
     public LoginControllerTests(WebTestFixture fixture)
     {
-        this.fixture = fixture;
-        userManagerMock = new Mock<UserManager<ApplicationUser>>(Mock.Of<IUserStore<ApplicationUser>>(), null, null, null, null, null, null, null, null);
-        tokenCreationServiceMock = new Mock<IAuthTokenManagerService>();
+        _fixture = fixture;
+        _userManagerMock = new Mock<UserManager<ApplicationUser>>(Mock.Of<IUserStore<ApplicationUser>>(), null, null, null, null, null, null, null, null);
+        _tokenCreationServiceMock = new Mock<IAuthTokenManagerService>();
     }
 
     [Fact]
@@ -29,10 +29,10 @@ public class LoginControllerTests : IClassFixture<WebTestFixture>
     {
         // Arrange
         var request = new LoginUserRequest { Email = "nonexistinguser@example.com", Password = "password" };
-        userManagerMock.Setup(m => m.FindByNameAsync(request.Email)).ReturnsAsync((ApplicationUser?)null);
+        _userManagerMock.Setup(m => m.FindByNameAsync(request.Email)).ReturnsAsync((ApplicationUser?)null);
 
-        var httpClient = fixture.WithServices(
-                services => services.AddScoped<UserManager<ApplicationUser>>(serviceProvider => userManagerMock.Object)
+        var httpClient = _fixture.WithServices(
+                services => services.AddScoped<UserManager<ApplicationUser>>(serviceProvider => _userManagerMock.Object)
             )
             .CreateClient();
 
@@ -51,11 +51,11 @@ public class LoginControllerTests : IClassFixture<WebTestFixture>
         // Arrange
         var request = new LoginUserRequest { Email = "existinguser@example.com", Password = "wrongpassword" };
         var existingUser = new ApplicationUser { UserName = request.Email };
-        userManagerMock.Setup(m => m.FindByNameAsync(request.Email)).ReturnsAsync(existingUser);
-        userManagerMock.Setup(m => m.CheckPasswordAsync(existingUser, request.Password)).ReturnsAsync(false);
+        _userManagerMock.Setup(m => m.FindByNameAsync(request.Email)).ReturnsAsync(existingUser);
+        _userManagerMock.Setup(m => m.CheckPasswordAsync(existingUser, request.Password)).ReturnsAsync(false);
 
-        var httpClient = fixture.WithServices(
-                services => services.AddScoped<UserManager<ApplicationUser>>(serviceProvider => userManagerMock.Object)
+        var httpClient = _fixture.WithServices(
+                services => services.AddScoped<UserManager<ApplicationUser>>(serviceProvider => _userManagerMock.Object)
             )
             .CreateClient();
 
@@ -74,14 +74,14 @@ public class LoginControllerTests : IClassFixture<WebTestFixture>
         // Arrange
         var request = new LoginUserRequest { Email = "existinguser@example.com", Password = "correctpassword" };
         var existingUser = new ApplicationUser { UserName = request.Email };
-        userManagerMock.Setup(m => m.FindByNameAsync(request.Email)).ReturnsAsync(existingUser);
-        userManagerMock.Setup(m => m.CheckPasswordAsync(existingUser, request.Password)).ReturnsAsync(true);
+        _userManagerMock.Setup(m => m.FindByNameAsync(request.Email)).ReturnsAsync(existingUser);
+        _userManagerMock.Setup(m => m.CheckPasswordAsync(existingUser, request.Password)).ReturnsAsync(true);
         var expectedToken = new LoginUserTokenResponse { AccessToken = "some-token" };
-        tokenCreationServiceMock.Setup(m => m.CreateToken(existingUser)).Returns(expectedToken);
+        _tokenCreationServiceMock.Setup(m => m.CreateToken(existingUser)).Returns(expectedToken);
 
-        var httpClient = fixture.WithServices(services => {
-                services.AddScoped<UserManager<ApplicationUser>>(serviceProvider => userManagerMock.Object);
-                services.AddScoped<IAuthTokenManagerService>(serviceProvider => tokenCreationServiceMock.Object);
+        var httpClient = _fixture.WithServices(services => {
+                services.AddScoped<UserManager<ApplicationUser>>(serviceProvider => _userManagerMock.Object);
+                services.AddScoped<IAuthTokenManagerService>(serviceProvider => _tokenCreationServiceMock.Object);
             })
             .CreateClient();
 

@@ -10,7 +10,7 @@ using TodoApi.Services;
 
 namespace TodoApi.Tests.Services;
 
-public class JWTTokenManagerServiceTest
+public class JwtTokenManagerServiceTest
 {
     private const string TEST_ISSUER = "testIssuer";
     private const string TEST_AUDIENCE = "testAudience";
@@ -19,24 +19,24 @@ public class JWTTokenManagerServiceTest
     private const string TEST_USER_USERNAME = "testUsername";
     private const string TEST_USER_EMAIL = "test@example.com";
 
-    private readonly Mock<IConfiguration> configurationMock;
-    private readonly Mock<UserManager<ApplicationUser>> userManagerMock;
-    private readonly JWTTokenManagerService jwtService;
-    private readonly ApplicationUser user;
+    private readonly Mock<IConfiguration> _configurationMock;
+    private readonly Mock<UserManager<ApplicationUser>> _userManagerMock;
+    private readonly JwtTokenManagerService _jwtService;
+    private readonly ApplicationUser _user;
 
-    public JWTTokenManagerServiceTest()
+    public JwtTokenManagerServiceTest()
     {
-        configurationMock = new Mock<IConfiguration>();
-        userManagerMock = new Mock<UserManager<ApplicationUser>>(
+        _configurationMock = new Mock<IConfiguration>();
+        _userManagerMock = new Mock<UserManager<ApplicationUser>>(
             Mock.Of<IUserStore<ApplicationUser>>(),
             null, null, null, null, null, null, null, null
         );
 
-        configurationMock.SetupGet(c => c["Jwt:Issuer"]).Returns(TEST_ISSUER);
-        configurationMock.SetupGet(c => c["Jwt:Audience"]).Returns(TEST_AUDIENCE);
+        _configurationMock.SetupGet(c => c["Jwt:Issuer"]).Returns(TEST_ISSUER);
+        _configurationMock.SetupGet(c => c["Jwt:Audience"]).Returns(TEST_AUDIENCE);
 
-        jwtService = new JWTTokenManagerService(configurationMock.Object, userManagerMock.Object);
-        user = new ApplicationUser
+        _jwtService = new JwtTokenManagerService(_configurationMock.Object, _userManagerMock.Object);
+        _user = new ApplicationUser
         {
             Id = TEST_USER_ID,
             UserName = TEST_USER_USERNAME,
@@ -48,32 +48,32 @@ public class JWTTokenManagerServiceTest
     public void CreateToken_ReturnsLoginUserTokenResponse()
     {
         // Arrange
-        userManagerMock
+        _userManagerMock
             .Setup(um => um.UpdateAsync(It.IsAny<ApplicationUser>()))
             .ReturnsAsync(IdentityResult.Success);
 
         // Act
-        LoginUserTokenResponse result = jwtService.CreateToken(user);
+        LoginUserTokenResponse result = _jwtService.CreateToken(_user);
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(user.RefreshToken, result.RefreshToken);
-        Assert.Equal(user.RefreshTokenExpiryTime, result.RefreshTokenExpiration);
+        Assert.Equal(_user.RefreshToken, result.RefreshToken);
+        Assert.Equal(_user.RefreshTokenExpiryTime, result.RefreshTokenExpiration);
         Assert.NotEmpty(result.AccessToken);
         Assert.True(DateTime.UtcNow.AddMinutes(10) - result.AccessTokenExpiration < TimeSpan.FromSeconds(3));
-        userManagerMock.Verify(um => um.UpdateAsync(It.IsAny<ApplicationUser>()), Times.Once);
+        _userManagerMock.Verify(um => um.UpdateAsync(It.IsAny<ApplicationUser>()), Times.Once);
     }
 
     [Fact]
     public void CreateToken_GeneratesValidJwtToken()
     {
         // Arrange
-        userManagerMock
+        _userManagerMock
             .Setup(um => um.UpdateAsync(It.IsAny<ApplicationUser>()))
             .ReturnsAsync(IdentityResult.Success);
 
         // Act
-        LoginUserTokenResponse result = jwtService.CreateToken(user);
+        LoginUserTokenResponse result = _jwtService.CreateToken(_user);
 
         // Assert
         JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
@@ -83,43 +83,43 @@ public class JWTTokenManagerServiceTest
         Assert.Equal(TEST_USER_ID, token.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value);
         Assert.Equal(TEST_USER_USERNAME, token.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value);
         Assert.Equal(TEST_USER_EMAIL, token.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value);
-        userManagerMock.Verify(um => um.UpdateAsync(It.Is<ApplicationUser>(u => u.RefreshToken == result.RefreshToken && u.RefreshTokenExpiryTime == result.RefreshTokenExpiration)), Times.Once);
+        _userManagerMock.Verify(um => um.UpdateAsync(It.Is<ApplicationUser>(u => u.RefreshToken == result.RefreshToken && u.RefreshTokenExpiryTime == result.RefreshTokenExpiration)), Times.Once);
     }
 
     [Fact]
     public void FindUserByToken_WithValidToken_ReturnsUser()
     {
         // Arrange
-        userManagerMock
+        _userManagerMock
             .Setup(um => um.FindByNameAsync(It.IsAny<string>()))
-            .ReturnsAsync(user);
+            .ReturnsAsync(_user);
 
-        string accessToken = jwtService.CreateToken(user).AccessToken;
+        string accessToken = _jwtService.CreateToken(_user).AccessToken;
         Assert.NotNull(accessToken);
 
         // Act
-        var result = jwtService.FindUserByToken(accessToken);
+        var result = _jwtService.FindUserByToken(accessToken);
 
         // Assert
-        Assert.NotNull(user);
-        userManagerMock.Verify(u => u.FindByNameAsync(user.UserName ?? ""), Times.Once);
+        Assert.NotNull(_user);
+        _userManagerMock.Verify(u => u.FindByNameAsync(_user.UserName ?? ""), Times.Once);
         Assert.NotNull(result);
-        Assert.Equal(user.UserName, result.UserName);
+        Assert.Equal(_user.UserName, result.UserName);
     }
 
     [Fact]
     public void FindUserByToken_WithInvalidToken_ReturnsNull()
     {
         // Arrange
-        userManagerMock
+        _userManagerMock
             .Setup(um => um.FindByNameAsync(It.IsAny<string>()))
             .ReturnsAsync((ApplicationUser?)null);
 
         // Act
-        var result = jwtService.FindUserByToken("invalid_token");
+        var result = _jwtService.FindUserByToken("invalid_token");
 
         // Assert
-        userManagerMock.Verify(u => u.FindByNameAsync(It.IsAny<string>()), Times.Never);
+        _userManagerMock.Verify(u => u.FindByNameAsync(It.IsAny<string>()), Times.Never);
         Assert.Null(result);
     }
 }

@@ -1,79 +1,63 @@
-
-
 using TodoApi.Data;
 using TodoApi.Interfaces;
 using TodoApi.Models;
 
-public class DatabaseTodoService: ITodoService
-{
-    private ApplicationDbContext dbContext;
+namespace TodoApi.Services;
 
-    public DatabaseTodoService(ApplicationDbContext dbContext)
-    {
-        this.dbContext = dbContext;
-    }
+public class DatabaseTodoService : ITodoService
+{
+    private ApplicationDbContext _context;
+
+    public DatabaseTodoService(ApplicationDbContext context) => _context = context;
 
     public TodoItem CreateTodoItem(ApplicationUser user, string text)
     {
-        TodoItem newItem = new TodoItem {
+        var newItem = new TodoItem
+        {
             Text = text,
-            UserId = user.Id
+            UserId = user.Id,
         };
 
-        dbContext.TodoItems.Add(newItem);
+        _context.TodoItems.Add(newItem);
 
-        dbContext.SaveChanges();
+        _context.SaveChanges();
 
         return newItem;
     }
 
-    public TodoItem? FindTodoItemById(int id)
-    {
-        return dbContext.TodoItems
-            .Where(todoItem => todoItem.Id == id)
-            .FirstOrDefault<TodoItem?>();
-    }
+    public TodoItem? FindTodoItemById(int id) =>
+        _context.TodoItems
+            .FirstOrDefault(todoItem => todoItem.Id == id);
 
-    public void MarkCompleted(TodoItem item)
-    {
-        UpdateIsCompleted(item, true);
-    }
+    public void MarkCompleted(TodoItem item) => UpdateIsCompleted(item, true);
 
-    public void MarkIncompleted(TodoItem item)
-    {
-        UpdateIsCompleted(item, false);
-    }
+    public void MarkInCompleted(TodoItem item) => UpdateIsCompleted(item, false);
 
     private void UpdateIsCompleted(TodoItem item, bool isCompleted)
     {
         item.IsCompleted = isCompleted;
-
-        dbContext.TodoItems.Update(item);
-
-        dbContext.SaveChanges();
+        _context.TodoItems.Update(item);
+        _context.SaveChanges();
     }
 
     public TodoItem UpdateTodoItemText(TodoItem item, string text)
     {
         item.Text = text;
-
-        dbContext.TodoItems.Update(item);
-
-        dbContext.SaveChanges();
+        _context.TodoItems.Update(item);
+        _context.SaveChanges();
 
         return item;
     }
 
     public void DeleteTodoItem(TodoItem item)
     {
-        dbContext.TodoItems.Remove(item);
-
-        dbContext.SaveChanges();
+        _context.TodoItems.Remove(item);
+        _context.SaveChanges();
     }
 
     public ICollection<TodoItem> GetTodoItems(ApplicationUser user)
     {
-        return dbContext.TodoItems
+        return _context.TodoItems
             .Where(todoItem => todoItem.UserId == user.Id)
             .OrderBy(todoItem => todoItem.IsCompleted)
             .ToList();

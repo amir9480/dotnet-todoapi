@@ -1,10 +1,9 @@
 using TodoApi.Models;
-using TodoApi.ResourceModels;
 
 namespace TodoApi.Interfaces;
 
 /// <summary>
-/// Interface to implement todo managment.
+/// Interface to implement todo management.
 /// </summary>
 public interface ITodoService
 {
@@ -33,7 +32,7 @@ public interface ITodoService
     /// Mark todo as uncompleted.
     /// </summary>
     /// <param name="item"></param>
-    public void MarkIncompleted(TodoItem item);
+    public void MarkInCompleted(TodoItem item);
 
     /// <summary>
     /// Update todo item text.

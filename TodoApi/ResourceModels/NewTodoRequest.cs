@@ -4,6 +4,5 @@ namespace TodoApi.ResourceModels;
 
 public class NewTodoRequest
 {
-    [Required]
-    public string Text { get; set; } = null!;
+    [Required] public string Text { get; set; } = null!;
 }
