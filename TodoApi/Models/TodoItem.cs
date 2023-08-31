@@ -5,9 +5,10 @@ namespace TodoApi.Models;
 
 public class TodoItem : IEntityTimestamps
 {
+    //Todo: Please Use Required  specifier
     public int Id { get; set; }
 
-    public bool IsCompleted { get; set; } = false;
+    public bool IsCompleted { get; set; }
 
     public string Text { get; set; } = null!;
 

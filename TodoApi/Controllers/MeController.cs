@@ -1,8 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using TodoApi.Interfaces;
-using TodoApi.Models;
 using TodoApi.ResourceModels;
 using TodoApi.Utilities;
 
@@ -17,13 +14,14 @@ namespace TodoApi.Controllers;
 public class MeController : ControllerBase
 {
     [HttpGet]
-    [ProducesResponseType(StatusCodes.Status200OK, Type=typeof(MeResponse))]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized, Type=typeof(UnauthorizedResult))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MeResponse))]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(UnauthorizedResult))]
     public IActionResult Me()
     {
-        ApplicationUser user = HttpContext.GetApplicationUser();
+        var user = HttpContext.GetApplicationUser();
 
-        var response = new MeResponse {
+        var response = new MeResponse
+        {
             Id = user.Id,
             Email = user.Email,
             RefreshTokenExpiryTime = user.RefreshTokenExpiryTime,

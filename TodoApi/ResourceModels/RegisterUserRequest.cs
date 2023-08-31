@@ -4,10 +4,9 @@ namespace TodoApi.ResourceModels;
 
 public class RegisterUserRequest
 {
-    [Required]
-    [EmailAddress]
-    public string Email { get; set; } = null!;
+    //Todo: Please Use Required  specifier
 
-    [Required]
-    public string Password { get; set; } = null!;
+    [EmailAddress]
+    [Required] public string Email { get; set; } = null!;
+    [Required] public string Password { get; set; } = null!;
 }

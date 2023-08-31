@@ -4,6 +4,6 @@ namespace TodoApi.ResourceModels;
 
 public class UpdateTodoRequest
 {
-    [Required]
-    public string Text { get; set; } = null!;
+    //Todo: Please Use Required  specifier
+    [Required] public string Text { get; set; } = null!;
 }

@@ -12,17 +12,17 @@ using TodoApi.ResourceModels;
 namespace TodoApi.Services;
 
 /// <summary>
-/// Service class for auth token managment using JWT tokens.
+/// Service class for auth token management using JWT tokens.
 /// </summary>
-public class JWTTokenManagerService : IAuthTokenManagerService
+public class JwtTokenManagerService : IAuthTokenManagerService
 {
-    private readonly IConfiguration configuration;
-    private readonly UserManager<ApplicationUser> userManager;
+    private readonly IConfiguration _configuration;
+    private readonly UserManager<ApplicationUser> _userManager;
 
-    public JWTTokenManagerService(IConfiguration configuration, UserManager<ApplicationUser> userManager)
+    public JwtTokenManagerService(IConfiguration configuration, UserManager<ApplicationUser> userManager)
     {
-        this.configuration = configuration;
-        this.userManager = userManager;
+        _configuration = configuration;
+        _userManager = userManager;
     }
 
     /// <summary>
@@ -36,9 +36,7 @@ public class JWTTokenManagerService : IAuthTokenManagerService
     public ApplicationUser? FindUserByToken(string tokenString)
     {
         if (tokenString.StartsWith("bearer", StringComparison.InvariantCultureIgnoreCase))
-        {
             tokenString = tokenString.Substring(7);
-        }
 
         try
         {
@@ -46,15 +44,14 @@ public class JWTTokenManagerService : IAuthTokenManagerService
             var username = token.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
 
             if (username != null)
-            {
-                return userManager.FindByNameAsync(username).GetAwaiter().GetResult();
-            }
+                return _userManager.FindByNameAsync(username).GetAwaiter().GetResult();
         }
         catch
         {
             return null;
         }
 
+        // todo : return statement should not be null
         return null;
     }
 
@@ -65,11 +62,11 @@ public class JWTTokenManagerService : IAuthTokenManagerService
     /// <returns>New access token and refresh token and their validity lifetime.</returns>
     public LoginUserTokenResponse CreateToken(ApplicationUser user)
     {
-        DateTime accessTokenExpiration = DateTime.UtcNow.AddSeconds(int.Parse(Environment.GetEnvironmentVariable("ACCESS_TOKEN_LIFETIME_IN_SECONDS") ?? "3600"));
-        DateTime refreshTokenExpiration = DateTime.UtcNow.AddDays(int.Parse(Environment.GetEnvironmentVariable("REFRESH_TOKEN_LIFETIME_IN_DAYS") ?? "7"));
+        var accessTokenExpiration = DateTime.UtcNow.AddSeconds(int.Parse(Environment.GetEnvironmentVariable("ACCESS_TOKEN_LIFETIME_IN_SECONDS") ?? "3600"));
+        var refreshTokenExpiration = DateTime.UtcNow.AddDays(int.Parse(Environment.GetEnvironmentVariable("REFRESH_TOKEN_LIFETIME_IN_DAYS") ?? "7"));
 
-        string accessToken = CreateJwtToken(user, accessTokenExpiration);
-        string refreshToken = CreateRefreshToken(user, refreshTokenExpiration);
+        var accessToken = CreateJwtToken(user, accessTokenExpiration);
+        var refreshToken = CreateRefreshToken(user, refreshTokenExpiration);
 
         return new LoginUserTokenResponse
         {
@@ -88,21 +85,21 @@ public class JWTTokenManagerService : IAuthTokenManagerService
     /// <returns>JWT token as string.</returns>
     private string CreateJwtToken(ApplicationUser user, DateTime expiration)
     {
-        Claim[] claims = CreateClaims(user);
-        SigningCredentials credentials = new SigningCredentials(
+        var claims = CreateClaims(user);
+        var credentials = new SigningCredentials(
             new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_KEY") ?? "")),
             SecurityAlgorithms.HmacSha256
         );
 
-        JwtSecurityToken token = new JwtSecurityToken(
-            configuration["Jwt:Issuer"],
-            configuration["Jwt:Audience"],
+        var token = new JwtSecurityToken(
+            _configuration["Jwt:Issuer"],
+            _configuration["Jwt:Audience"],
             claims,
             expires: expiration,
             signingCredentials: credentials
         );
 
-        JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
+        var tokenHandler = new JwtSecurityTokenHandler();
 
         return tokenHandler.WriteToken(token);
     }
@@ -115,11 +112,10 @@ public class JWTTokenManagerService : IAuthTokenManagerService
     /// <returns>New refresh token for given user.</returns>
     private string CreateRefreshToken(ApplicationUser user, DateTime expiration)
     {
-        string refreshToken = GenerateRefreshToken();
+        var refreshToken = GenerateRefreshToken();
         user.RefreshToken = refreshToken;
         user.RefreshTokenExpiryTime = expiration;
-        userManager.UpdateAsync(user);
-
+        _userManager.UpdateAsync(user);
         return refreshToken;
     }
 
@@ -129,14 +125,11 @@ public class JWTTokenManagerService : IAuthTokenManagerService
     /// <returns>Random token that can be used as refresh token.</returns>
     private static string GenerateRefreshToken()
     {
-        byte[] randomNumber = new byte[64];
-        using (var rng = RandomNumberGenerator.Create())
-        {
-            rng.GetBytes(randomNumber);
-        }
+        var randomNumber = new byte[64];
+        using (var rng = RandomNumberGenerator.Create()) rng.GetBytes(randomNumber);
 
-        string hashedToken = Convert.ToBase64String(
-            KeyDerivation.Pbkdf2(
+        var hashedToken = Convert.ToBase64String(
+            inArray: KeyDerivation.Pbkdf2(
                 password: Convert.ToBase64String(randomNumber),
                 salt: Array.Empty<byte>(),
                 prf: KeyDerivationPrf.HMACSHA256,
@@ -153,7 +146,7 @@ public class JWTTokenManagerService : IAuthTokenManagerService
     /// </summary>
     /// <param name="user"></param>
     /// <returns>Array of claims to create JWT token.</returns>
-    private Claim[] CreateClaims(ApplicationUser user)
+    private static IEnumerable<Claim> CreateClaims(ApplicationUser user)
     {
         return new[] {
             new Claim(ClaimTypes.NameIdentifier, user.Id),
