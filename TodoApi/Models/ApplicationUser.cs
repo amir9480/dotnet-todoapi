@@ -5,8 +5,6 @@ namespace TodoApi.Models;
 
 public class ApplicationUser : IdentityUser
 {
-    //Todo: Please Use Required  specifier
-
     /// <summary>
     /// API user refresh token.
     /// </summary>
@@ -22,5 +20,5 @@ public class ApplicationUser : IdentityUser
     /// Todo items of each user.
     /// </summary>
     [JsonIgnore]
-    public ICollection<TodoItem> TodoItems { get; set; } = null!;
+    public ICollection<TodoItem> TodoItems { get; set; } = new List<TodoItem>();
 }

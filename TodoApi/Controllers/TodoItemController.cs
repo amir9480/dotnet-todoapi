@@ -12,11 +12,11 @@ namespace TodoApi.Controllers;
 [Route("[controller]")]
 public class TodoItemController : ControllerBase
 {
-    private readonly ITodoService todoService;
+    private readonly ITodoService _todoService;
 
     public TodoItemController(ITodoService todoService)
     {
-        this.todoService = todoService;
+        _todoService = todoService;
     }
 
     [HttpGet]
@@ -25,7 +25,7 @@ public class TodoItemController : ControllerBase
     public IActionResult Index()
     {
         var user = HttpContext.GetApplicationUser();
-        var todoItems = todoService.GetTodoItems(user);
+        var todoItems = _todoService.GetTodoItems(user);
         return Ok(todoItems);
     }
 
@@ -36,7 +36,7 @@ public class TodoItemController : ControllerBase
     public IActionResult Create([FromForm] NewTodoRequest model)
     {
         var user = HttpContext.GetApplicationUser();
-        var item = todoService.CreateTodoItem(user, model.Text);
+        var item = _todoService.CreateTodoItem(user, model.Text);
         return Created("", item);
     }
 
@@ -47,21 +47,21 @@ public class TodoItemController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(NotFoundResult))]
     public IActionResult Update(int id, [FromForm] UpdateTodoRequest model) =>
-        RunTodoItemAction(id, (todoItem) => todoService.UpdateTodoItemText(todoItem, model.Text));
+        RunTodoItemAction(id, (todoItem) => _todoService.UpdateTodoItemText(todoItem, model.Text));
 
     [HttpPatch("{id:int}/MarkCompleted")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TodoItem))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(UnauthorizedResult))]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(NotFoundResult))]
-    public IActionResult MarkCompleted(int id) => RunTodoItemAction(id, todoService.MarkCompleted);
+    public IActionResult MarkCompleted(int id) => RunTodoItemAction(id, _todoService.MarkCompleted);
 
-    [HttpPatch("{id}/MarkIncCompleted")]
+    [HttpPatch("{id}/MarkInCompleted")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TodoItem))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(UnauthorizedResult))]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(NotFoundResult))]
-    public IActionResult MarkInCompleted(int id) => RunTodoItemAction(id, todoService.MarkInCompleted);
+    public IActionResult MarkInCompleted(int id) => RunTodoItemAction(id, _todoService.MarkInCompleted);
 
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent, Type = typeof(NoContentResult))]
@@ -70,13 +70,13 @@ public class TodoItemController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(NotFoundResult))]
     public IActionResult Delete(int id)
     {
-        var result = RunTodoItemAction(id, todoService.DeleteTodoItem);
+        var result = RunTodoItemAction(id, _todoService.DeleteTodoItem);
         return result is OkObjectResult ? NoContent() : result;
     }
 
     private IActionResult RunTodoItemAction(int id, Action<TodoItem> action)
     {
-        var todoItem = todoService.FindTodoItemById(id);
+        var todoItem = _todoService.FindTodoItemById(id);
 
         if (todoItem == null)
             return NotFound();

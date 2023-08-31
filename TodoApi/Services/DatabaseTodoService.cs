@@ -8,14 +8,14 @@ public class DatabaseTodoService : ITodoService
 {
     private ApplicationDbContext _context;
 
-    public DatabaseTodoService(ApplicationDbContext dbContext) => _context = dbContext;
+    public DatabaseTodoService(ApplicationDbContext context) => _context = context;
 
     public TodoItem CreateTodoItem(ApplicationUser user, string text)
     {
         var newItem = new TodoItem
         {
             Text = text,
-            UserId = user.Id
+            UserId = user.Id,
         };
 
         _context.TodoItems.Add(newItem);
@@ -33,11 +33,11 @@ public class DatabaseTodoService : ITodoService
 
     public void MarkInCompleted(TodoItem item) => UpdateIsCompleted(item, false);
 
-    private async void UpdateIsCompleted(TodoItem item, bool isCompleted)
+    private void UpdateIsCompleted(TodoItem item, bool isCompleted)
     {
         item.IsCompleted = isCompleted;
         _context.TodoItems.Update(item);
-        await _context.SaveChangesAsync();
+        _context.SaveChanges();
     }
 
     public TodoItem UpdateTodoItemText(TodoItem item, string text)
@@ -49,10 +49,10 @@ public class DatabaseTodoService : ITodoService
         return item;
     }
 
-    public async void DeleteTodoItem(TodoItem item)
+    public void DeleteTodoItem(TodoItem item)
     {
         _context.TodoItems.Remove(item);
-        await _context.SaveChangesAsync();
+        _context.SaveChanges();
     }
 
     public ICollection<TodoItem> GetTodoItems(ApplicationUser user)

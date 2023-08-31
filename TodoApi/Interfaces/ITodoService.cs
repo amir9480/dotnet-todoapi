@@ -8,7 +8,7 @@ namespace TodoApi.Interfaces;
 public interface ITodoService
 {
     /// <summary>
-    /// Create new todo: for given user.
+    /// Create new todo for given user.
     /// </summary>
     /// <param name="user"></param>
     /// <param name="text"></param>

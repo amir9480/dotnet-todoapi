@@ -11,17 +11,17 @@ namespace TodoApi.Tests.Controllers;
 
 public class RegisterControllerTest : IClassFixture<WebTestFixture>
 {
-    private readonly HttpClient client;
-    private readonly Mock<UserManager<ApplicationUser>> userManagerMock;
+    private readonly HttpClient _client;
+    private readonly Mock<UserManager<ApplicationUser>> _userManagerMock;
 
     public RegisterControllerTest(WebTestFixture fixture)
     {
-        userManagerMock = new Mock<UserManager<ApplicationUser>>(
+        _userManagerMock = new Mock<UserManager<ApplicationUser>>(
             Mock.Of<IUserStore<ApplicationUser>>(),
             null, null, null, null, null, null, null, null
         );
-        client = fixture.WithServices(
-                services => services.AddScoped<UserManager<ApplicationUser>>(serviceProvider => userManagerMock.Object)
+        _client = fixture.WithServices(
+                services => services.AddScoped<UserManager<ApplicationUser>>(serviceProvider => _userManagerMock.Object)
             )
             .CreateClient();
     }
@@ -36,12 +36,12 @@ public class RegisterControllerTest : IClassFixture<WebTestFixture>
             Password = "password"
         };
 
-        userManagerMock
+        _userManagerMock
             .Setup(um => um.CreateAsync(It.IsAny<ApplicationUser>(), request.Password))
             .ReturnsAsync(IdentityResult.Success);
 
         // Act
-        var response = await client.PostAsync("/Auth/Register", request.ToFormUrlEncodedContent());
+        var response = await _client.PostAsync("/Auth/Register", request.ToFormUrlEncodedContent());
         var responseBody = await response.Content.ReadAsStringAsync();
         var result = JsonSerializer.Deserialize<RegisterUserRequest>(responseBody, new JsonSerializerOptions
         {
@@ -53,6 +53,6 @@ public class RegisterControllerTest : IClassFixture<WebTestFixture>
         Assert.NotNull(result);
         Assert.Equal(request.Email, result.Email);
         Assert.Null(result.Password);
-        userManagerMock.Verify(um => um.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()), Times.Once);
+        _userManagerMock.Verify(um => um.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()), Times.Once);
     }
 }

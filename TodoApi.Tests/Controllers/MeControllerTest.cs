@@ -7,15 +7,15 @@ namespace TodoApi.Tests.Controllers;
 
 public class MeControllerTest : IClassFixture<WebTestFixture>
 {
-    private readonly HttpClient client;
-    private readonly ApplicationUser user;
-    private readonly string accessTokenHeader;
+    private readonly HttpClient _client;
+    private readonly ApplicationUser _user;
+    private readonly string _accessTokenHeader;
 
     public MeControllerTest(WebTestFixture fixture)
     {
-        client = fixture.CreateClient();
-        user = fixture.User;
-        accessTokenHeader = $"Bearer {fixture.UserAccessToken}";
+        _client = fixture.CreateClient();
+        _user = fixture.User;
+        _accessTokenHeader = $"Bearer {fixture.UserAccessToken}";
     }
 
     [Fact]
@@ -23,10 +23,10 @@ public class MeControllerTest : IClassFixture<WebTestFixture>
     {
         // Arrange
         var request = new HttpRequestMessage(HttpMethod.Get, "/Auth/Me");
-        request.Headers.Add("Authorization", accessTokenHeader);
+        request.Headers.Add("Authorization", _accessTokenHeader);
 
         // Act
-        var response = await client.SendAsync(request);
+        var response = await _client.SendAsync(request);
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -38,9 +38,9 @@ public class MeControllerTest : IClassFixture<WebTestFixture>
         });
 
         Assert.NotNull(responseObject);
-        Assert.Equal(user.Id, responseObject.Id);
-        Assert.Equal(user.Email, responseObject.Email);
-        Assert.Equal(user.RefreshTokenExpiryTime, responseObject.RefreshTokenExpiryTime);
+        Assert.Equal(_user.Id, responseObject.Id);
+        Assert.Equal(_user.Email, responseObject.Email);
+        Assert.Equal(_user.RefreshTokenExpiryTime, responseObject.RefreshTokenExpiryTime);
     }
 
     [Fact]
@@ -50,7 +50,7 @@ public class MeControllerTest : IClassFixture<WebTestFixture>
         var request = new HttpRequestMessage(HttpMethod.Get, "/Auth/Me");
 
         // Act
-        var response = await client.SendAsync(request);
+        var response = await _client.SendAsync(request);
 
         // Assert
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
