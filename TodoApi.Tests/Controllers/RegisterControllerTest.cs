@@ -52,7 +52,7 @@ public class RegisterControllerTest : IClassFixture<WebTestFixture>
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         Assert.NotNull(result);
         Assert.Equal(request.Email, result.Email);
-        Assert.Null(result.Password);
+        Assert.Empty(result.Password);
         _userManagerMock.Verify(um => um.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()), Times.Once);
     }
 }

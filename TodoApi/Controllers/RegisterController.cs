@@ -35,7 +35,7 @@ public class RegisterController : ControllerBase
         if (!result.Succeeded)
             return UnprocessableEntity(result.Errors);
 
-        model.Password = null!;
+        model.Password = "";
 
         return Created("", model);
     }
